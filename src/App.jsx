@@ -228,7 +228,8 @@ const tokenMatches = (tok, spokenToks, spokenConcat) => {
 // 여러 인식 후보를 모두 합쳐서 정답 핵심 단어가 충분히 들어 있으면 통과
 //  · 숫자(학년·날짜)는 모두 정확히 일치해야 함
 //  · 나머지 핵심 단어는 75% 이상 맞으면 통과(발음/오인식 한두 개는 허용)
-const matchAggregate = (transcripts, required) => {
+//  · lenient=true(연습 팝업): 조금 더 너그럽게(핵심 단어 60% 이상). 숫자는 여전히 정확히.
+const matchAggregate = (transcripts, required, lenient = false) => {
   let spokenToks = [];
   transcripts.forEach((t) => { spokenToks = spokenToks.concat(tokenize(t)); });
   const spokenConcat = spokenToks.join('');
@@ -237,7 +238,7 @@ const matchAggregate = (transcripts, required) => {
   if (!nums.every((t) => tokenMatches(t, spokenToks, spokenConcat))) return false;
   if (words.length === 0) return true;
   const hit = words.filter((t) => tokenMatches(t, spokenToks, spokenConcat)).length;
-  return hit >= Math.ceil(words.length * 0.75);
+  return hit >= Math.ceil(words.length * (lenient ? 0.6 : 0.75));
 };
 
 // 정확도(%) 계산 — 칸별 녹음의 막대/숫자 표시에 사용 (게임과 동일한 매칭 로직)
@@ -983,7 +984,7 @@ export default function App() {
       const transcripts = [];
       for (let i = 0; i < result.length; i++) transcripts.push(result[i].transcript);
       const accuracy = computeAccuracy(transcripts, required);
-      const passed = matchAggregate(transcripts, required);
+      const passed = matchAggregate(transcripts, required, true); // 연습은 약간 허용적으로
       setPracticeTarget(null);
       setPracticeResult({ target: which, accuracy, passed, status: 'ok' });
       if (passed) {
@@ -1436,7 +1437,7 @@ export default function App() {
           const collected = cell.type === 'normal' && stars.has(exprKey(cell));
 
           let baseStyle =
-            'w-full h-24 md:h-32 rounded-2xl flex flex-col items-center justify-center relative transform transition-all duration-300 hover:-translate-y-1 z-10 group';
+            'w-full h-32 md:h-44 rounded-2xl flex flex-col items-center justify-center relative transform transition-all duration-300 hover:-translate-y-1 z-10 group';
           let cellStyle = '';
 
           if (cell.type === 'normal') {
@@ -1509,8 +1510,8 @@ export default function App() {
                     src={cell.image}
                     alt={cell.answer}
                     fallbackEmoji={cell.emoji}
-                    className="w-14 h-14 md:w-20 md:h-20 object-contain mb-1 drop-shadow-md transform transition-transform group-hover:scale-110"
-                    fallbackClass="text-4xl md:text-6xl mb-1 drop-shadow-md transform transition-transform group-hover:scale-110"
+                    className="w-[76px] h-[76px] md:w-28 md:h-28 object-contain mb-1 drop-shadow-md transform transition-transform group-hover:scale-110"
+                    fallbackClass="text-5xl md:text-7xl mb-1 drop-shadow-md transform transition-transform group-hover:scale-110"
                   />
                   <div
                     className={`text-[9px] md:text-xs font-black border-2 px-2 py-0.5 rounded-full shadow-inner ${UNIT_COLORS[cell.unit] || 'text-slate-600 bg-white border-slate-300'}`}
@@ -1631,7 +1632,7 @@ export default function App() {
                 src={previewCell.image}
                 alt={previewCell.answer}
                 fallbackEmoji={previewCell.emoji}
-                className="w-32 h-32 object-contain drop-shadow-md mb-3"
+                className="w-44 h-44 md:w-52 md:h-52 object-contain drop-shadow-md mb-3"
                 fallbackClass="text-8xl drop-shadow-md mb-3"
               />
               <div className="flex items-center gap-2">
@@ -2028,7 +2029,7 @@ export default function App() {
                     src={currentTask.cell.image}
                     alt={currentTask.answer}
                     fallbackEmoji={currentTask.cell.emoji}
-                    className="w-32 h-32 object-contain drop-shadow-md"
+                    className="w-40 h-40 md:w-44 md:h-44 object-contain drop-shadow-md"
                     fallbackClass="text-8xl drop-shadow-md"
                   />
                   <span className={`text-sm font-black px-3 py-1 rounded-xl shadow-sm border-2 ${UNIT_COLORS[currentTask.cell.unit] || 'text-blue-600 bg-white border-blue-200'}`}>
@@ -2054,7 +2055,7 @@ export default function App() {
                     src={currentTask.cell.image}
                     alt={currentTask.answer}
                     fallbackEmoji={currentTask.cell.emoji}
-                    className="w-32 h-32 object-contain drop-shadow-md"
+                    className="w-40 h-40 md:w-44 md:h-44 object-contain drop-shadow-md"
                     fallbackClass="text-8xl drop-shadow-md"
                   />
                   <span className={`text-sm font-black px-3 py-1 rounded-xl shadow-sm border-2 ${UNIT_COLORS[currentTask.cell.unit] || 'text-blue-600 bg-white border-blue-200'}`}>
