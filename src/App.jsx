@@ -1588,9 +1588,10 @@ export default function App() {
             <div className="space-y-3 text-left">
               {[
                 { n: '1', c: 'bg-sky-100 border-sky-300 text-sky-800', t: '그림 칸을 눌러 질문·대답을 듣고 따라 말해요.' },
-                { n: '2', c: 'bg-cyan-100 border-cyan-300 text-cyan-800', t: '🎤 마이크로 직접 녹음하면 정확도(%)를 알려줘요.' },
-                { n: '3', c: 'bg-teal-100 border-teal-300 text-teal-800', t: '게임 시작! 주사위를 굴려 도착한 칸의 문장을 말해요.' },
-                { n: '4', c: 'bg-amber-100 border-amber-300 text-amber-800', t: '정확히 말하고 통과하면 ⭐ 별 스티커를 모아요.' },
+                { n: '2', c: 'bg-cyan-100 border-cyan-300 text-cyan-800', t: '🎤 질문·대답을 직접 녹음하면 정확도(%)를 알려줘요.' },
+                { n: '3', c: 'bg-violet-100 border-violet-300 text-violet-800', t: "✏️ '쓰기 활동' 버튼을 누르고, ✏️ 쓰기 표시가 있는 칸을 골라 공책에 질문과 대답을 다 적어보세요!" },
+                { n: '4', c: 'bg-teal-100 border-teal-300 text-teal-800', t: '게임 시작! 주사위를 굴려 도착한 칸의 문장을 말해요.' },
+                { n: '5', c: 'bg-amber-100 border-amber-300 text-amber-800', t: '정확히 말하고 통과하면 ⭐ 별 스티커를 모아요.' },
               ].map((s) => (
                 <div key={s.n} className={`flex items-start gap-3 p-3 rounded-2xl border-2 ${s.c}`}>
                   <span className="w-8 h-8 shrink-0 rounded-full bg-white border-2 border-current flex items-center justify-center font-black">{s.n}</span>
