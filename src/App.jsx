@@ -1256,45 +1256,48 @@ export default function App() {
         </div>
       )}
 
-      <header className="w-full max-w-6xl flex flex-col gap-3 mb-4 bg-white/95 backdrop-blur-sm p-4 md:p-5 rounded-2xl shadow-[0_4px_0_0_rgba(0,0,0,0.2)] z-10 border-2 border-sky-700">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-sky-800 leading-tight break-keep flex-1">
-            🏖️ 6학년 1-6단원 주요표현 보드게임 <span className="text-cyan-600">with Writing</span>
+      <header className="w-full max-w-6xl mb-4 z-10 rounded-3xl overflow-hidden shadow-[0_6px_0_0_rgba(0,0,0,0.15)] border-4 border-white/80">
+        {/* 제목 띠 (바다 그라데이션) */}
+        <div className="relative bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500 px-4 py-4 md:py-5 text-center overflow-hidden">
+          <div className="absolute top-1 left-3 text-2xl md:text-3xl opacity-70 select-none pointer-events-none">🌊</div>
+          <div className="absolute bottom-1 right-3 text-2xl md:text-3xl opacity-70 select-none pointer-events-none">⛱️</div>
+          <h1 className="relative text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight break-keep drop-shadow-[0_2px_0_rgba(2,132,199,0.9)]">
+            🏖️ 6학년 1-6단원 주요표현 보드게임{' '}
+            <span className="text-yellow-200">with Writing</span> 🏄
           </h1>
-
-          <div className="flex flex-wrap gap-2 items-center md:justify-end">
-            <button
-              onClick={() => setShowGuide(true)}
-              className="px-4 py-2 rounded-xl font-bold whitespace-nowrap bg-sky-100 hover:bg-sky-200 text-sky-800 border-2 border-sky-300 transition-all"
-            >
-              📖 활동 방법
-            </button>
-
-            <div className="flex bg-gray-200 p-1 rounded-xl shadow-inner">
-              <button
-                onClick={() => handleModeChange('answerOnly')}
-                className={`px-3 py-2 rounded-lg font-bold transition-all text-sm md:text-base whitespace-nowrap ${gameMode === 'answerOnly' ? 'bg-white shadow-sm text-sky-800 border border-gray-300' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                대답만 하기
-              </button>
-              <button
-                onClick={() => handleModeChange('qna')}
-                className={`px-3 py-2 rounded-lg font-bold transition-all text-sm md:text-base whitespace-nowrap ${gameMode === 'qna' ? 'bg-white shadow-sm text-sky-800 border border-gray-300' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                질문&대답 같이
-              </button>
-            </div>
-
-            <button
-              onClick={toggleBoardWriting}
-              className={`px-5 py-2 rounded-xl font-bold transition-all whitespace-nowrap shadow-[0_4px_0_0_rgba(124,58,237,1)] active:shadow-[0_0px_0_0_rgba(124,58,237,1)] active:translate-y-1 ${boardWritingMode ? 'bg-violet-600 text-white' : 'bg-violet-500 hover:bg-violet-400 text-white'}`}
-            >
-              {boardWritingMode ? '✏️ 쓰기 활동 끄기' : '✏️ 쓰기 활동'}
-            </button>
-          </div>
         </div>
 
-        <div className="flex justify-center md:justify-end">
+        {/* 버튼 툴바 */}
+        <div className="bg-white/95 backdrop-blur-sm px-3 py-3 flex flex-wrap gap-2 justify-center items-center">
+          <button
+            onClick={() => setShowGuide(true)}
+            className="px-4 py-2 rounded-xl font-bold whitespace-nowrap bg-sky-100 hover:bg-sky-200 text-sky-800 border-2 border-sky-300 transition-all"
+          >
+            📖 활동 방법
+          </button>
+
+          <div className="flex bg-gray-200 p-1 rounded-xl shadow-inner">
+            <button
+              onClick={() => handleModeChange('answerOnly')}
+              className={`px-3 py-2 rounded-lg font-bold transition-all text-sm md:text-base whitespace-nowrap ${gameMode === 'answerOnly' ? 'bg-white shadow-sm text-sky-800 border border-gray-300' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              대답만 하기
+            </button>
+            <button
+              onClick={() => handleModeChange('qna')}
+              className={`px-3 py-2 rounded-lg font-bold transition-all text-sm md:text-base whitespace-nowrap ${gameMode === 'qna' ? 'bg-white shadow-sm text-sky-800 border border-gray-300' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              질문&대답 같이
+            </button>
+          </div>
+
+          <button
+            onClick={toggleBoardWriting}
+            className={`px-5 py-2 rounded-xl font-bold transition-all whitespace-nowrap shadow-[0_4px_0_0_rgba(124,58,237,1)] active:shadow-[0_0px_0_0_rgba(124,58,237,1)] active:translate-y-1 ${boardWritingMode ? 'bg-violet-600 text-white' : 'bg-violet-500 hover:bg-violet-400 text-white'}`}
+          >
+            {boardWritingMode ? '✏️ 쓰기 활동 끄기' : '✏️ 쓰기 활동'}
+          </button>
+
           <button
             onClick={resetGame}
             className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl font-bold transition-all shadow-[0_4px_0_0_rgba(180,83,9,1)] active:shadow-[0_0px_0_0_rgba(180,83,9,1)] active:translate-y-1 whitespace-nowrap"
