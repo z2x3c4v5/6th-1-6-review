@@ -375,16 +375,17 @@ const pickRandomBlanks = (segs, count) => {
   return new Set(shuffleArr(idxs).slice(0, count));
 };
 
-// 보드에서 선택 단원별로 쓰기 활동 칸을 무작위로 뽑음(총 8칸 안팎)
+// 보드에서 단원별로 쓰기 활동 칸을 2개씩 무작위로 뽑음
+//  (6단원 모두 선택 시 2×6 = 총 12칸)
+const WRITING_PER_UNIT = 2;
 const pickWritingCells = (board, selectedUnits) => {
   const units = (selectedUnits && selectedUnits.length ? selectedUnits : ALL_UNITS);
-  const perUnit = Math.max(1, Math.round(8 / units.length));
   const out = new Set();
   units.forEach((u) => {
     const ids = board
       .filter((c) => c.type === 'normal' && c.unit === u)
       .map((c) => c.id);
-    shuffleArr(ids).slice(0, perUnit).forEach((id) => out.add(id));
+    shuffleArr(ids).slice(0, WRITING_PER_UNIT).forEach((id) => out.add(id));
   });
   return out;
 };
@@ -1332,7 +1333,7 @@ export default function App() {
       {boardWritingMode && (
         <div className="w-full max-w-6xl bg-violet-100 border-4 border-violet-400 p-3 rounded-2xl mb-4 text-center z-10 animate-pulse">
           <p className="text-base md:text-lg font-black text-violet-800">
-            ✏️ 쓰기 활동 — 표시된 <span className="text-violet-900">{writingCellIds.size}개 칸</span>의 ✏️ 쓰기 칸을 눌러보세요
+            ✏️ 쓰기 활동 — 단원별 2개씩, 총 <span className="text-violet-900">{writingCellIds.size}개 칸</span>에 표시된 ✏️ 쓰기 칸을 눌러보세요
           </p>
         </div>
       )}
