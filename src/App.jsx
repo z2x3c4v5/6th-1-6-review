@@ -392,7 +392,6 @@ const pickWritingCells = (board, selectedUnits) => {
 
 // --- 별 스티커 로컬 저장 --------------------------------------------
 const STAR_KEY = 'boardgame_stars_v2';
-const GUIDE_KEY = 'boardgame_guide_seen_v2';
 
 const loadStars = () => {
   try {
@@ -465,9 +464,7 @@ export default function App() {
   // 별 스티커 / 안내 / 토스트
   const [stars, setStars] = useState(loadStars);
   const [toast, setToast] = useState(null);
-  const [showGuide, setShowGuide] = useState(() => {
-    try { return !localStorage.getItem(GUIDE_KEY); } catch (e) { return true; }
-  });
+  const [showGuide, setShowGuide] = useState(true); // 접속할 때마다 항상 안내 팝업 표시
 
   // 칸별 마이크 녹음(연습 팝업) — 질문/대답을 각각 골라 채점
   const [practiceTarget, setPracticeTarget] = useState(null); // 'question' | 'answer' | null (현재 녹음 중)
@@ -514,10 +511,7 @@ export default function App() {
     setToast('별 스티커를 초기화했어요');
   };
 
-  const closeGuide = () => {
-    try { localStorage.setItem(GUIDE_KEY, '1'); } catch (e) { /* 무시 */ }
-    setShowGuide(false);
-  };
+  const closeGuide = () => setShowGuide(false);
 
   const speakText = (text, rate = 0.8) => {
     if ('speechSynthesis' in window) {
@@ -1589,9 +1583,9 @@ export default function App() {
               {[
                 { n: '1', c: 'bg-sky-100 border-sky-300 text-sky-800', t: '그림 칸을 눌러 질문·대답을 듣고 따라 말해요.' },
                 { n: '2', c: 'bg-cyan-100 border-cyan-300 text-cyan-800', t: '🎤 질문·대답을 직접 녹음하면 정확도(%)를 알려줘요.' },
-                { n: '3', c: 'bg-violet-100 border-violet-300 text-violet-800', t: "✏️ '쓰기 활동' 버튼을 누르고, ✏️ 쓰기 표시가 있는 칸을 골라 공책에 질문과 대답을 다 적어보세요!" },
-                { n: '4', c: 'bg-teal-100 border-teal-300 text-teal-800', t: '게임 시작! 주사위를 굴려 도착한 칸의 문장을 말해요.' },
-                { n: '5', c: 'bg-amber-100 border-amber-300 text-amber-800', t: '정확히 말하고 통과하면 ⭐ 별 스티커를 모아요.' },
+                { n: '3', c: 'bg-teal-100 border-teal-300 text-teal-800', t: '게임 시작! 주사위를 굴려 도착한 칸의 문장을 말해요.' },
+                { n: '4', c: 'bg-amber-100 border-amber-300 text-amber-800', t: '정확히 말하고 통과하면 ⭐ 별 스티커를 모아요.' },
+                { n: '5', c: 'bg-violet-100 border-violet-300 text-violet-800', t: "✏️ '쓰기 활동' 버튼을 누르고, ✏️ 쓰기 표시가 있는 칸을 골라 공책에 질문과 대답을 다 적어보세요!" },
               ].map((s) => (
                 <div key={s.n} className={`flex items-start gap-3 p-3 rounded-2xl border-2 ${s.c}`}>
                   <span className="w-8 h-8 shrink-0 rounded-full bg-white border-2 border-current flex items-center justify-center font-black">{s.n}</span>
