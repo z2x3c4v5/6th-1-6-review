@@ -468,8 +468,9 @@ export default function App() {
     try { return !localStorage.getItem(GUIDE_KEY); } catch (e) { return true; }
   });
 
-  // 칸별 마이크 녹음(연습 팝업)
-  const [previewRec, setPreviewRec] = useState(null); // { listening, accuracy, passed, error }
+  // 칸별 마이크 녹음(연습 팝업) — 질문/대답을 각각 골라 채점
+  const [practiceTarget, setPracticeTarget] = useState(null); // 'question' | 'answer' | null (현재 녹음 중)
+  const [practiceResult, setPracticeResult] = useState(null); // { target, accuracy, passed, status }
   const previewRecRef = useRef(null);
 
   // --- 마이크 오류 방지 로직 ---
@@ -946,9 +947,21 @@ export default function App() {
     }
   };
 
-  // 칸별 마이크 녹음: 질문+대답을 말하면 정확도(%)를 알려주고, 통과하면 별 획득
-  const startPreviewRecording = () => {
-    if (!previewCell) return;
+  // 상황별 격려 메시지 (연습 팝업 결과 카드)
+  const practiceMessage = (r) => {
+    if (!r) return '';
+    if (r.status === 'nospeech') return '목소리가 안 들렸어요. 크게 말해보세요! 🔊';
+    if (r.status === 'error') return '마이크 연결이 불안정해요. 다시 눌러주세요! 🎤';
+    if (r.passed) return 'Excellent! 🎉';
+    if (r.accuracy >= 50) return '아깝다, 조금만 더! 💪';
+    return '다시 듣고 도전해봐요! 🌱';
+  };
+
+  // 칸별 마이크 녹음: 질문 또는 대답을 골라 말하면 정확도(%)를 알려주고, 통과하면 별 획득
+  //  · which: 'question' | 'answer' — 채점할 문장을 인자로 받음
+  //  · 채점은 게임과 완전히 동일한 로직 재사용(contentTokens + matchAggregate)
+  const startPracticeListening = (which) => {
+    if (!previewCell || practiceTarget) return; // 이미 녹음 중이면 무시(동시 녹음 방지)
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert('이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 사용해주세요.');
@@ -957,35 +970,46 @@ export default function App() {
     stopPreviewRec();
 
     const cell = previewCell;
-    const required = [...new Set([...contentTokens(cell.question), ...contentTokens(cell.answer)])];
+    const text = which === 'question' ? cell.question : cell.answer;
+    const required = contentTokens(text);
 
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.lang = 'en-US';
     recognition.interimResults = false;
-    recognition.maxAlternatives = 5;
+    recognition.maxAlternatives = 5; // 후보 5개를 받아 통과율↑
 
-    recognition.onstart = () => setPreviewRec({ listening: true });
+    recognition.onstart = () => {
+      setPracticeTarget(which);
+      setPracticeResult(null);
+    };
     recognition.onresult = (event) => {
       const result = event.results[0];
       const transcripts = [];
       for (let i = 0; i < result.length; i++) transcripts.push(result[i].transcript);
       const accuracy = computeAccuracy(transcripts, required);
       const passed = matchAggregate(transcripts, required);
-      setPreviewRec({ listening: false, accuracy, passed });
-      if (passed) awardStar(cell);
+      setPracticeTarget(null);
+      setPracticeResult({ target: which, accuracy, passed, status: 'ok' });
+      if (passed) {
+        speakText('Excellent!');
+        awardStar(cell); // ⭐ 통과 시 그 문장 단위로 별 획득
+      }
     };
     recognition.onerror = (event) => {
-      setPreviewRec({ listening: false, error: event.error !== 'no-speech' && event.error !== 'aborted' });
+      setPracticeTarget(null);
+      if (event.error === 'aborted') return;
+      setPracticeResult({ target: which, status: event.error === 'no-speech' ? 'nospeech' : 'error' });
     };
-    recognition.onend = () => setPreviewRec((p) => (p && p.listening ? { ...p, listening: false } : p));
+    recognition.onend = () => setPracticeTarget((t) => (t === which ? null : t));
 
     previewRecRef.current = recognition;
     try {
-      setPreviewRec({ listening: true });
+      setPracticeTarget(which);
+      setPracticeResult(null);
       recognition.start();
     } catch (e) {
-      setPreviewRec(null);
+      setPracticeTarget(null);
     }
   };
 
@@ -1002,7 +1026,8 @@ export default function App() {
 
     setWordHint(null);
     setWriteRevealed(false);
-    setPreviewRec(null);
+    setPracticeTarget(null);
+    setPracticeResult(null);
     setPreviewCell(cell);
 
     if (boardWritingMode && writingCellIds.has(cell.id)) {
@@ -1019,20 +1044,14 @@ export default function App() {
   };
 
   const closePreview = () => {
-    stopPreviewRec();
+    stopPreviewRec(); // 팝업 닫으면 녹음 자동 중단
     setPreviewCell(null);
-    setPreviewRec(null);
+    setPracticeTarget(null);
+    setPracticeResult(null);
     setWordHint(null);
     setWriteMode(false);
     setWriteRevealed(false);
     setBlankSet(null);
-  };
-
-  const startWriting = () => {
-    setWriteRevealed(false);
-    const segs = parseForBlanks(previewCell.answer);
-    setBlankSet(pickRandomBlanks(segs, 2));
-    setWriteMode(true);
   };
 
   const reshuffleBlanks = () => {
@@ -1657,51 +1676,68 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 칸별 마이크 녹음 + 정확도 */}
-                <div className="mt-4 bg-green-50 border-2 border-green-200 rounded-2xl p-4">
-                  <p className="text-sm font-black text-green-700 mb-2">🎤 질문과 대답을 직접 녹음해 정확도를 확인해요!</p>
-                  <button
-                    onClick={startPreviewRecording}
-                    disabled={previewRec?.listening}
-                    className={`w-20 h-20 rounded-full text-3xl shadow-[0_6px_0_0_rgba(0,0,0,0.15)] flex items-center justify-center mx-auto transition-all
-                      ${previewRec?.listening ? 'bg-red-500 text-white animate-pulse shadow-none translate-y-1' : 'bg-green-500 text-white hover:bg-green-400 active:shadow-none active:translate-y-1'}`}
-                  >
-                    {previewRec?.listening ? '🎙️' : '🎤'}
-                  </button>
-                  {previewRec?.listening && <p className="text-red-500 font-bold mt-3 animate-pulse">듣고 있어요... 🗣️</p>}
-                  {previewRec?.error && <p className="text-rose-500 font-bold mt-3">마이크 연결이 불안정해요. 다시 눌러주세요! 🎤</p>}
-                  {previewRec && !previewRec.listening && typeof previewRec.accuracy === 'number' && (
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-black text-slate-600 text-sm">정확도</span>
-                        <span className={`font-black text-lg ${previewRec.passed ? 'text-green-600' : 'text-amber-600'}`}>{previewRec.accuracy}%</span>
-                      </div>
-                      <div className="h-4 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
-                        <div
-                          className={`h-full transition-all duration-500 ${previewRec.passed ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-gradient-to-r from-amber-300 to-orange-400'}`}
-                          style={{ width: `${previewRec.accuracy}%` }}
-                        />
-                      </div>
-                      <p className={`mt-2 font-black ${previewRec.passed ? 'text-green-600' : 'text-amber-600'}`}>
-                        {previewRec.passed ? '통과! ⭐ 별 스티커를 모았어요!' : '조금 더 또박또박 말해볼까요? 💪'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <div className="mt-5 flex justify-center">
                   <button
                     onClick={() => speakText(`${previewCell.question} ... ${previewCell.answer}`)}
                     className="px-5 py-3 bg-cyan-500 hover:bg-cyan-400 text-white rounded-full font-black text-lg shadow-[0_5px_0_0_rgba(8,145,178,1)] active:shadow-none active:translate-y-1 transition-all"
                   >
                     🔊 다시 듣기
                   </button>
-                  <button
-                    onClick={startWriting}
-                    className="px-5 py-3 bg-violet-500 hover:bg-violet-400 text-white rounded-full font-black text-lg shadow-[0_5px_0_0_rgba(124,58,237,1)] active:shadow-none active:translate-y-1 transition-all"
-                  >
-                    ✏️ 공책에 쓰기
-                  </button>
+                </div>
+
+                {/* 칸별 마이크 녹음 — 질문/대답 각각 채점 */}
+                <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
+                  <p className="text-sm md:text-base font-black text-blue-700 mb-3">🎤 직접 말해보고 정확도를 확인해봐요!</p>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={() => startPracticeListening('question')}
+                      disabled={practiceTarget && practiceTarget !== 'question'}
+                      className={`flex-1 max-w-[46%] px-3 py-3 rounded-2xl font-black text-white text-base md:text-lg transition-all shadow-[0_5px_0_0_rgba(0,0,0,0.15)] active:shadow-none active:translate-y-1
+                        ${practiceTarget === 'question'
+                          ? 'bg-red-500 animate-pulse'
+                          : practiceTarget === 'answer'
+                            ? 'bg-blue-300 opacity-40 cursor-not-allowed'
+                            : 'bg-blue-500 hover:bg-blue-400'}`}
+                    >
+                      {practiceTarget === 'question' ? '🎙️ 듣는 중...' : '🎤 질문 말하기'}
+                    </button>
+                    <button
+                      onClick={() => startPracticeListening('answer')}
+                      disabled={practiceTarget && practiceTarget !== 'answer'}
+                      className={`flex-1 max-w-[46%] px-3 py-3 rounded-2xl font-black text-white text-base md:text-lg transition-all shadow-[0_5px_0_0_rgba(0,0,0,0.15)] active:shadow-none active:translate-y-1
+                        ${practiceTarget === 'answer'
+                          ? 'bg-red-500 animate-pulse'
+                          : practiceTarget === 'question'
+                            ? 'bg-orange-300 opacity-40 cursor-not-allowed'
+                            : 'bg-orange-500 hover:bg-orange-400'}`}
+                    >
+                      {practiceTarget === 'answer' ? '🎙️ 듣는 중...' : '🎤 대답 말하기'}
+                    </button>
+                  </div>
+
+                  {practiceTarget && (
+                    <p className="text-red-500 font-bold mt-3 animate-pulse">듣고 있어요... 큰 소리로 말해보세요! 🗣️</p>
+                  )}
+
+                  {practiceResult && !practiceTarget && (
+                    practiceResult.status !== 'ok' ? (
+                      <div className="mt-3 bg-white border-2 border-rose-200 rounded-xl p-3 font-black text-rose-500">
+                        {practiceMessage(practiceResult)}
+                      </div>
+                    ) : (
+                      <div className={`mt-3 bg-white border-2 rounded-xl p-3 ${practiceResult.passed ? 'border-green-300' : 'border-amber-300'}`}>
+                        <p className={`font-black text-base md:text-lg mb-2 ${practiceResult.passed ? 'text-green-600' : 'text-amber-600'}`}>
+                          {practiceResult.target === 'question' ? '질문' : '대답'} 정확도 {practiceResult.accuracy}% · {practiceMessage(practiceResult)}
+                        </p>
+                        <div className="h-4 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                          <div
+                            className={`h-full transition-all duration-500 ${practiceResult.passed ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-gradient-to-r from-amber-300 to-orange-400'}`}
+                            style={{ width: `${practiceResult.accuracy}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  )}
                 </div>
               </>
             ) : (
