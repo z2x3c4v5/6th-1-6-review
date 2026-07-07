@@ -1654,13 +1654,29 @@ export default function App() {
               <>
                 <div className="space-y-3 text-left">
                   <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
-                    <p className="text-xs font-black text-blue-500 uppercase tracking-wide mb-1">Question · 질문</p>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="text-xs font-black text-blue-500 uppercase tracking-wide">Question · 질문</p>
+                      <button
+                        onClick={() => speakText(previewCell.question)}
+                        className="shrink-0 text-xs md:text-sm font-black text-blue-700 bg-blue-100 hover:bg-blue-200 border border-blue-300 px-3 py-1 rounded-full transition-colors shadow-sm"
+                      >
+                        🔊 질문 듣기
+                      </button>
+                    </div>
                     <p className="text-2xl md:text-3xl font-black text-slate-800 leading-snug">
                       <ClickableWords text={previewCell.question} onWord={(w) => { speakText(w); setWordHint({ word: w, meaning: lookupMeaning(w) }); }} />
                     </p>
                   </div>
                   <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4">
-                    <p className="text-xs font-black text-amber-600 uppercase tracking-wide mb-1">Answer · 대답</p>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="text-xs font-black text-amber-600 uppercase tracking-wide">Answer · 대답</p>
+                      <button
+                        onClick={() => speakText(previewCell.answer)}
+                        className="shrink-0 text-xs md:text-sm font-black text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1 rounded-full transition-colors shadow-sm"
+                      >
+                        🔊 대답 듣기
+                      </button>
+                    </div>
                     <p className="text-2xl md:text-3xl font-black text-slate-800 leading-snug">
                       <ClickableWords text={previewCell.answer} onWord={(w) => { speakText(w); setWordHint({ word: w, meaning: lookupMeaning(w) }); }} />
                     </p>
